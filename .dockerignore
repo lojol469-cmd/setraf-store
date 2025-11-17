@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Frontend files (not needed for backend deployment)
+frontend/
+src/
+public/
+index.html
+vite.config.js
+eslint.config.js
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Coverage
+coverage/
+.nyc_output
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Tests
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js

@@ -7,8 +7,8 @@ RUN apk add --no-cache dumb-init curl
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm ci --only=production && npm cache clean --force
@@ -29,8 +29,8 @@ WORKDIR /app
 # Copy dependencies from base stage
 COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy application code
-COPY --chown=nextjs:nodejs . .
+# Copy backend application code
+COPY --chown=nextjs:nodejs backend/ .
 
 # Create uploads directory if needed
 RUN mkdir -p uploads && chown -R nextjs:nodejs uploads

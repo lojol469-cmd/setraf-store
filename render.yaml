@@ -2,7 +2,7 @@ services:
   - type: web
     name: setraf-store-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: ./
     port: 5000
     healthCheckPath: /api/health
