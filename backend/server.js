@@ -26,31 +26,7 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow localhost origins for development
-    if (origin.match(/^http:\/\/localhost:\d+$/)) return callback(null, true);
-    
-    // Allow production frontend
-    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
-    
-    // Allow specific domains
-    const allowedOrigins = [
-      'https://your-frontend-domain.com',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://localhost:5173'
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: true, // Allow all origins for now
   credentials: true
 }));
 app.use(express.json());
