@@ -8,7 +8,8 @@ function Stats() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('/api/stats/downloads')
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      const response = await axios.get(`${apiBaseUrl}/api/stats/downloads`)
       if (response.data.success) {
         setStats(response.data.stats)
       }

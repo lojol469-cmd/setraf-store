@@ -13,7 +13,8 @@ function Download({ release, loading }) {
     setDownloading(true)
     
     try {
-      const response = await axios.get(`/api/app/download/${release._id}`)
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      const response = await axios.get(`${apiBaseUrl}/api/app/download/${release._id}`)
       
       if (response.data.success) {
         // Ouvrir le lien de téléchargement Cloudinary

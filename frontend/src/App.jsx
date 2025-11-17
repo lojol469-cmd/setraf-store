@@ -18,7 +18,8 @@ function App() {
 
   const fetchLatestRelease = async () => {
     try {
-      const response = await axios.get('/api/app/latest')
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      const response = await axios.get(`${apiBaseUrl}/api/app/latest`)
       if (response.data.success) {
         setLatestRelease(response.data.release)
       }
