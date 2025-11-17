@@ -26,7 +26,31 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost origins for development
+    if (origin.match(/^http:\/\/localhost:\d+$/)) return callback(null, true);
+    
+    // Allow production frontend
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+    
+    // Allow specific domains
+    const allowedOrigins = [
+      'https://your-frontend-domain.com',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:5173'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -92,6 +116,166 @@ const downloadSchema = new mongoose.Schema({
 
 const Download = mongoose.model('Download', downloadSchema);
 
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+// ========================================
+// AUTH MODELS
+// ========================================
+
+// User Schema
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'admin' },
+  isActive: { type: Boolean, default: true },
+  otpSecret: { type: String },
+  otpExpires: { type: Date },
+  lastLogin: { type: Date }
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+
+// ========================================
+// AUTH ROUTES
+// ========================================
+
+// POST - Inscription
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, otp } = req.body;
+
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email déjà utilisé' });
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Créer l'utilisateur
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'admin' // Par défaut admin pour ce projet
+    });
+
+    // Générer le token JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Utilisateur créé avec succès',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Erreur inscription:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// POST - Connexion
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password, otp } = req.body;
+
+    // Trouver l'utilisateur
+    const user = await User.findOne({ email, isActive: true });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Email ou mot de passe incorrect' });
+    }
+
+    // Vérifier le mot de passe
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Email ou mot de passe incorrect' });
+    }
+
+    // Mettre à jour la dernière connexion
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Générer le token JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Connexion réussie',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Erreur connexion:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// GET - Vérifier le token (middleware pour les routes protégées)
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Token manquant' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Token invalide' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// GET - Profil utilisateur
+app.get('/api/auth/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLogin: user.lastLogin
+      }
+    });
+  } catch (error) {
+    console.error('Erreur récupération profil:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 // ========================================
 // ROUTES API
 // ========================================
@@ -122,6 +306,23 @@ app.get('/api/app/latest', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur récupération dernière version:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// GET - Toutes les versions (alias pour compatibilité frontend)
+app.get('/api/app/all', async (req, res) => {
+  try {
+    const releases = await Release.find({ isActive: true })
+      .sort({ versionCode: -1 })
+      .limit(20);
+
+    res.json({
+      success: true,
+      apps: releases
+    });
+  } catch (error) {
+    console.error('Erreur récupération apps:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -215,7 +416,7 @@ app.get('/api/stats/downloads', async (req, res) => {
 });
 
 // POST - Créer une nouvelle release (ADMIN)
-app.post('/api/admin/release', async (req, res) => {
+app.post('/api/admin/release', authenticateToken, async (req, res) => {
   try {
     const {
       version,
