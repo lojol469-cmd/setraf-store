@@ -518,5 +518,7 @@ app.listen(PORT, () => {
   console.log(`\n🚀 Server démarré sur le port ${PORT}`);
   console.log(`📦 MongoDB: ${process.env.MONGO_DB_NAME}`);
   console.log(`☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME}`);
-  console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}\n`);
+  console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}`);
+  console.log(`🔧 Auth routes: /api/auth/*`);
+  console.log(`📱 App routes: /api/app/*\n`);
 });
