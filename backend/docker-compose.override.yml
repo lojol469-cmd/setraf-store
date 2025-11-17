@@ -1,0 +1,25 @@
+version: '3.8'
+
+# Override pour développement local
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:5173
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - center-store-network
+
+  mongo:
+    ports:
+      - "27017:27017"
+    networks:
+      - center-store-network

@@ -1,0 +1,82 @@
+.screenshots {
+  padding: 120px 20px;
+}
+
+.screenshots-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.screenshot-card {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+.screenshot-phone {
+  background: linear-gradient(135deg, #1e1e2e, #2a2a3e);
+  border-radius: 30px;
+  padding: 15px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9/19.5;
+}
+
+.screenshot-phone::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 25px;
+  background: #1a1a2e;
+  border-radius: 0 0 15px 15px;
+  z-index: 10;
+}
+
+.screenshot-phone img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.screenshot-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.screenshot-caption {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--gray);
+}
+
+@media (max-width: 768px) {
+  .screenshots {
+    padding: 80px 20px;
+  }
+
+  .screenshots-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+  }
+}
